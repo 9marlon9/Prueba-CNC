@@ -51,16 +51,9 @@ replace DEPARTAMENTO = "ANTIOQUIA" if DEPARTAMENTO == "ANTIOQUIAA"
 * Filtrar únicamente colegios del sector oficial
 keep if SECTOR_ATENCION == "OFICIAL"
 * a) Departamento con mayor número de colegios oficiales
-bysort DEPARTAMENTO: gen n_colegios = _N
 
-* Ver resumen (cuántos colegios por DEPARTAMENTO, sin repeticiones)
-bysort DEPARTAMENTO (n_colegios): keep if _n==1
-sort -n_colegios
-list DEPARTAMENTO n_colegios in 1/10   // muestra el top 10
-* b) Municipio con mayor número de colegios oficiales  
-egen conteo_mun = count(SEDE_ID), by(MUNICIPIO DEPARTAMENTO)  // Contar sedes por municipio
-gsort -conteo_mun  // Ordenar de mayor a menor
-list MUNICIPIO DEPARTAMENTO conteo_mun in 1/5, clean  // Mostrar top 5 municipios
+tab DEPARTAMENTO if SECTOR_ATENCION == "OFICIAL", sort
+
 
 
 
