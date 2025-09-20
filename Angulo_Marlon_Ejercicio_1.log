@@ -1,0 +1,1129 @@
+--------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\Marlon Angulo\Desktop\CNC\Angulo_Marlon_Ejerci
+> cio_1.log
+  log type:  text
+ opened on:  19 Sep 2025, 20:45:07
+
+. do "C:\Users\MARLON~1\AppData\Local\Temp\STD243c_000000.tmp"
+
+. clear all
+
+. 
+. * Ejercicio 1: 
+. 
+. * ***************************************************************
+. * 1 Importar la base SEDES_DEF2022 a STATA
+. * ***************************************************************
+. import excel using "https://github.com/9marlon9/Prueba-CNC/raw/mai
+> n/SEDES_DEF2022.xlsx", firstrow clear
+note:
+      https://github.com/9marlon9/Prueba-CNC/raw/main/SEDES_DEF202
+      > 2.xlsx redirected to
+      https://raw.githubusercontent.com/9marlon9/Prueba-CNC/main/S
+      > EDES_DEF2022.xlsx
+(45 vars, 53,375 obs)
+
+. 
+. * ***************************************************************
+. * 1.2 Estandarizar texto en DEPARTAMENTO, SECRETARIA y MUNICIPIO
+. * ***************************************************************
+. 
+. foreach var in DEPARTAMENTO SECRETARIA MUNICIPIO {
+  2.     * Convertir a mayúsculas y eliminar tildes específicas
+.     replace `var' = upper(`var')
+  3.     replace `var' = subinstr(`var', "Á", "A", .)
+  4.     replace `var' = subinstr(`var', "É", "E", .)
+  5.     replace `var' = subinstr(`var', "Í", "I", .)
+  6.     replace `var' = subinstr(`var', "Ó", "O", .)
+  7.     replace `var' = subinstr(`var', "Ú", "U", .)
+  8.     replace `var' = subinstr(`var', "Ñ", "N", .)
+  9.     replace `var' = subinstr(`var', "Ü", "U", .)
+ 10.     replace `var' = subinstr(`var', "Ï", "I", .)
+ 11.         
+.         replace `var' = subinstr(`var', "á", "A", .)
+ 12.     replace `var' = subinstr(`var', "é", "E", .)
+ 13.     replace `var' = subinstr(`var', "í", "I", .)
+ 14.     replace `var' = subinstr(`var', "ó", "O", .)
+ 15.     replace `var' = subinstr(`var', "ú", "U", .)
+ 16.         replace `var' = subinstr(`var', "ü", "U", .)
+ 17.     replace `var' = subinstr(`var', "ñ", "N", .)
+ 18.     
+.     * Eliminar espacios adicionales y estandarizar
+.     replace `var' = strtrim(`var')
+ 19.         replace `var' = subinstr(`var', "  ", " ", .)
+ 20.     replace `var' = subinstr(`var', "   ", " ", .)
+ 21.     replace `var' = subinstr(`var', ",", "", .)  // Eliminar co
+> mas
+ 22.     replace `var' = subinstr(`var', ".", "", .)  // Eliminar pu
+> ntos
+ 23. }
+(53,375 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(7,376 real changes made)
+(161 real changes made)
+(1,981 real changes made)
+(3,325 real changes made)
+(0 real changes made)
+(0 real changes made)
+(2,807 real changes made)
+(1,403 real changes made)
+(0 real changes made)
+(0 real changes made)
+(2,336 real changes made)
+(2,305 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(217 real changes made)
+(139 real changes made)
+(0 real changes made)
+(2,073 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(49 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(53,375 real changes made)
+(210 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(12 real changes made)
+(0 real changes made)
+(0 real changes made)
+(0 real changes made)
+(6,077 real changes made)
+(1,742 real changes made)
+(5,616 real changes made)
+(2,632 real changes made)
+(474 real changes made)
+(193 real changes made)
+(720 real changes made)
+(0 real changes made)
+(79 real changes made)
+(0 real changes made)
+(1,427 real changes made)
+(1,451 real changes made)
+
+. 
+. * ***************************************************************
+. * 1.3 Corregir nombre de Bogotá en variable DEPARTAMENTO
+. * ***************************************************************
+. 
+. replace DEPARTAMENTO = "BOGOTA D.C." if DEPARTAMENTO == "CAPITAL B
+> OGOTA DC" 
+(2,305 real changes made)
+
+. * Adicional: Corregir error específico de "ANTIOQUIAA" en variable
+>  DEPARTAMENTO
+. replace DEPARTAMENTO = "ANTIOQUIA" if DEPARTAMENTO == "ANTIOQUIAA"
+(3,933 real changes made)
+
+. 
+. * ***************************************************************
+. * 1.4 Filtrar colegios del sector oficial y determinar:
+. * ***************************************************************
+. 
+. * Filtrar únicamente colegios del sector oficial
+. keep if SECTOR_ATENCION == "OFICIAL"
+(9,556 observations deleted)
+
+. 
+. * Guardar la base filtrada en el repositorio
+. save "SEDES_DEF2022_OF.dta", replace
+file SEDES_DEF2022_OF.dta saved
+
+. 
+. * ----------------------------
+. * 1.4.1) Departamento con más colegios únicos (EST_ID)
+. * ----------------------------
+. preserve
+
+.     * Crear una marca que identifique la primera ocurrencia de cad
+> a (DEPARTAMENTO, EST_ID)
+.     bysort DEPARTAMENTO EST_ID: gen tag_dep = _n == 1
+
+. 
+.     * Sumar las marcas por departamento => número de colegios únic
+> os por departamento
+.     collapse (sum) n_colegios_dep = tag_dep, by(DEPARTAMENTO)
+
+. 
+.     * Ordenar y mostrar el top 5
+.     gsort -n_colegios_dep
+
+.     di "Departamento con más colegios (top 1):"
+Departamento con más colegios (top 1):
+
+.     list DEPARTAMENTO n_colegios_dep in 1
+
+     +----------------------+
+     | DEPARTA~O   n_cole~p |
+     |----------------------|
+  1. | ANTIOQUIA        958 |
+     +----------------------+
+
+. 
+.     * Mostrar top 3 (opcional)
+.     di "Top 3 departamentos:"
+Top 3 departamentos:
+
+.     list DEPARTAMENTO n_colegios_dep in 1/5 
+
+     +------------------------+
+     | DEPARTAME~O   n_cole~p |
+     |------------------------|
+  1. |   ANTIOQUIA        958 |
+  2. |      NARINO        695 |
+  3. |       CAUCA        596 |
+  4. |     CORDOBA        443 |
+  5. | BOGOTA D.C.        405 |
+     +------------------------+
+
+. restore
+
+. 
+. * ----------------------------
+. * 1.4.2) Municipio con más colegios únicos (EST_ID)
+. * ----------------------------
+. preserve
+
+.     * Marca por (MUNICIPIO, EST_ID)
+.     bysort MUNICIPIO EST_ID: gen tag_mun = _n == 1
+
+. 
+.     * Sumar las marcas por municipio => número de colegios únicos 
+> por municipio
+.     collapse (sum) n_colegios_mun = tag_mun, by(MUNICIPIO)
+
+. 
+.     * Ordenar y mostrar el top
+.     gsort -n_colegios_mun
+
+.     di "Municipio con más colegios (top 1):"
+Municipio con más colegios (top 1):
+
+.     list MUNICIPIO n_colegios_mun in 1
+
+     +---------------------+
+     | MUNICI~O   n_cole~n |
+     |---------------------|
+  1. |   BOGOTA        363 |
+     +---------------------+
+
+. 
+.     * Mostrar top 3 (opcional)
+.     di "Top 3 municipios:"
+Top 3 municipios:
+
+.     list MUNICIPIO n_colegios_mun in 1/3
+
+     +-------------------------+
+     |    MUNICIPIO   n_cole~n |
+     |-------------------------|
+  1. |       BOGOTA        363 |
+  2. |     MEDELLIN        231 |
+  3. | BARRANQUILLA        160 |
+     +-------------------------+
+
+. 
+. restore
+
+. 
+. * ***************************************************************
+. * 1.5) Número total se estudiantes por nivel educativo
+. * ***************************************************************
+. 
+. * Educación Primaria: grados 1° a 5° (PRIMERO a QUINTO)
+. gen PRIMARIA = PRIMERO + SEGUNDO + TERCERO + CUARTO + QUINTO
+
+. * Educación Secundaria grados 6° a 9° (SEXTO a NOVENO)
+. gen SECUNDARIA = SEXTO + SEPTIMO + OCTAVO + NOVENO
+
+. * Educación Media grados 10° a 11° (DECIMO a ONCE)
+. gen MEDIA = DECIMO + ONCE 
+
+. 
+. * Variables binarias de presencia de estudiantes por nivel
+. gen PRIMARIAB   = (PRIMERO > 0 | SEGUNDO > 0 | TERCERO > 0 | CUART
+> O > 0 | QUINTO > 0)
+
+. gen SECUNDARIAB = (SEXTO > 0 | SEPTIMO > 0 | OCTAVO > 0 | NOVENO >
+>  0)
+
+. gen MEDIAB      = (DECIMO > 0 | ONCE > 0)
+
+. 
+. * Clasificación según combinaciones
+. gen categoria = .
+(43,819 missing values generated)
+
+. replace categoria = 1 if PRIMARIAB==1 & SECUNDARIAB==0 & MEDIAB==0
+>    // Solo primaria
+(32,561 real changes made)
+
+. replace categoria = 2 if PRIMARIAB==0 & SECUNDARIAB==1 & MEDIAB==0
+>    // Solo secundaria
+(92 real changes made)
+
+. replace categoria = 3 if PRIMARIAB==0 & SECUNDARIAB==0 & MEDIAB==1
+>    // Solo media
+(21 real changes made)
+
+. replace categoria = 4 if PRIMARIAB==1 & SECUNDARIAB==1 & MEDIAB==0
+>    // Primaria ∩ Secundaria
+(2,750 real changes made)
+
+. replace categoria = 5 if PRIMARIAB==1 & SECUNDARIAB==0 & MEDIAB==1
+>    // Primaria ∩ Media
+(14 real changes made)
+
+. replace categoria = 6 if PRIMARIAB==0 & SECUNDARIAB==1 & MEDIAB==1
+>    // Secundaria ∩ Media
+(2,161 real changes made)
+
+. replace categoria = 7 if PRIMARIAB==1 & SECUNDARIAB==1 & MEDIAB==1
+>    // Los tres niveles
+(5,876 real changes made)
+
+. 
+. * Crear etiquetas
+. label define categorias ///
+>     1 "Primaria" ///
+>     2 "Secundaria" ///
+>     3 "Media" ///
+>     4 "Primaria ∩ Secundaria" ///
+>     5 "Primaria ∩ Media" ///
+>     6 "Secundaria ∩ Media" ///
+>     7 "Primaria ∩ Secundaria ∩ Media"
+
+. 
+. * Asignar etiquetas a la variable
+. label values categoria categorias
+
+. 
+. * Verificar
+. tab categoria
+
+                    categoria |      Freq.     Percent        Cum.
+------------------------------+-----------------------------------
+                     Primaria |     32,561       74.90       74.90
+                   Secundaria |         92        0.21       75.11
+                        Media |         21        0.05       75.16
+        Primaria ∩ Secundaria |      2,750        6.33       81.48
+             Primaria ∩ Media |         14        0.03       81.51
+           Secundaria ∩ Media |      2,161        4.97       86.48
+Primaria ∩ Secundaria ∩ Media |      5,876       13.52      100.00
+------------------------------+-----------------------------------
+                        Total |     43,475      100.00
+
+. 
+. save "SEDES_DEF2022_OF_RC.dta", replace
+file SEDES_DEF2022_OF_RC.dta saved
+
+. 
+. * ***************************************************************
+. * 1.6) Merge con lista de municipios
+. * ***************************************************************
+. 
+. use "Listado_municipios_PDET.dta", clear
+
+. 
+. * Estandarizar nombre del municipio para hacer match
+. gen MUNICIPIO = upper(municipio)
+
+. replace MUNICIPIO = strtrim(MUNICIPIO)
+(0 real changes made)
+
+. replace MUNICIPIO = subinstr(MUNICIPIO, "Á", "A", .)
+(14 real changes made)
+
+. replace MUNICIPIO = subinstr(MUNICIPIO, "É", "E", .)
+(6 real changes made)
+
+. replace MUNICIPIO = subinstr(MUNICIPIO, "Í", "I", .)
+(24 real changes made)
+
+. replace MUNICIPIO = subinstr(MUNICIPIO, "Ó", "O", .)
+(14 real changes made)
+
+. replace MUNICIPIO = subinstr(MUNICIPIO, "Ú", "U", .)
+(2 real changes made)
+
+. replace MUNICIPIO = subinstr(MUNICIPIO, "Ñ", "N", .)
+(2 real changes made)
+
+. replace MUNICIPIO = subinstr(MUNICIPIO, "Ü", "U", .)
+(1 real change made)
+
+. drop municipio
+
+. 
+. duplicates report MUNICIPIO
+
+Duplicates in terms of MUNICIPIO
+
+--------------------------------------
+   Copies | Observations       Surplus
+----------+---------------------------
+        1 |          166             0
+        2 |            4             2
+--------------------------------------
+
+. duplicates list MUNICIPIO
+
+Duplicates in terms of MUNICIPIO
+
+  +---------------------------+
+  | Group   Obs     MUNICIPIO |
+  |---------------------------|
+  |     1    31       MORALES |
+  |     1    67       MORALES |
+  |     2    48   PUERTO RICO |
+  |     2   113   PUERTO RICO |
+  +---------------------------+
+
+. 
+. *Base Pdet estandarizada
+. save "PDET_estandarizada.dta", replace
+file PDET_estandarizada.dta saved
+
+. 
+. * Cargar base principal de sedes oficiales
+. use "SEDES_DEF2022_OF_RC.dta", clear
+
+. merge m:m MUNICIPIO using "PDET_estandarizada.dta", gen(merge_pdet
+> )
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                        32,510
+        from master                    32,496  (merge_pdet==1)
+        from using                         14  (merge_pdet==2)
+
+    Matched                            11,323  (merge_pdet==3)
+    -----------------------------------------
+
+. 
+. save "merge_Pdte_SEDES_DEF2022_OF.dta", replace
+file merge_Pdte_SEDES_DEF2022_OF.dta saved
+
+. 
+. * ----------------------------
+. * 1.6.1 PROPORCIÓN DE COLEGIOS OFICIALES EN MUNICIPIOS PDET* -----
+> -----------------------
+. *NOTA: Correr el bloque completo. De Preserve a Restore
+. preserve
+
+.     * Identificar colegios únicos por EST_ID
+.         bysort EST_ID: gen tag_colegio = (_n == 1)
+
+. 
+.         * Contar total de colegios únicos
+.         quietly count if tag_colegio == 1
+
+.         local total_colegios = r(N)
+
+. 
+.         * Contar colegios en PDET
+.         quietly count if tag_colegio == 1 & subregion_pdet != ""
+
+.         local pdet_colegios = r(N)
+
+. 
+.         * Calcular proporción con un escalar
+.         scalar prop_pdet = (`pdet_colegios' / `total_colegios') * 
+> 100
+
+. 
+.         * Mostrar resultado
+.         * Mostrar resultados
+.         display "Número total de colegios únicos: " `total_colegio
+> s'
+Número total de colegios únicos: 8514
+
+.         display "Número de colegios en subregiones PDET: " `pdet_c
+> olegios'
+Número de colegios en subregiones PDET: 1957
+
+.         display "Proporción de colegios en subregiones PDET: " %6.
+> 2f prop_pdet "%"             
+Proporción de colegios en subregiones PDET:  22.99%
+
+.     
+. restore
+
+. 
+. 
+. * ----------------------------
+. * 1.6.2 PROPORCIÓN DE MATRÍCULA ESTUDIANTIL EN MUNICIPIOS PDET
+. * ----------------------------
+. gen total_matriculas= PRIMARIA + SECUNDARIA + MEDIA
+(14 missing values generated)
+
+. 
+. * Calcular matrícula total por condición PDET
+. *NOTA: Correr el bloque completo. De Preserve a Restore
+. preserve
+
+.     * Colapsar para obtener la matrícula total según condición PDE
+> T
+.     collapse (sum) total_matriculas, by(subregion_pdet)
+
+.     
+.     * Calcular total nacional
+.     egen matricula_total = total(total_matriculas)
+
+.     
+.     * Calcular proporciones
+.     gen prop_matricula = (total_matriculas / matricula_total) * 10
+> 0
+
+.     
+.     * Formatear para mejor presentación
+.     format prop_matricula %9.2f
+
+.     format total_matriculas %12.0fc
+
+.     
+.     * Mostrar resultados
+.     list subregion_pdet total_matriculas prop_matricula, clean noo
+> bs
+
+                              subregion_pdet   total_m~s   prop_m~a 
+>  
+                                               5,530,344      81.92 
+>  
+                ALTO PATIA Y NORTE DEL CAUCA     119,447       1.77 
+>  
+                                      ARAUCA      36,879       0.55 
+>  
+            BAJO CAUCA Y NORDESTE ANTIOQUEÑO      83,465       1.24 
+>  
+                                   CATATUMBO      43,983       0.65 
+>  
+                                       CHOCÓ      42,032       0.62 
+>  
+    CUENCA DEL CAGUÁN Y PIEDEMONTE CAQUETEÑO      85,919       1.27 
+>  
+                           MACARENA GUAVIARE      34,157       0.51 
+>  
+                             MONTES DE MARÍA      81,574       1.21 
+>  
+                              PACÍFICO MEDIO      57,624       0.85 
+>  
+               PACÍFICO Y FRONTERA NARIÑENSE      91,401       1.35 
+>  
+                                    PUTUMAYO      51,177       0.76 
+>  
+          SIERRA NEVADA-PERIJÁ-ZONA BANANERA     266,420       3.95 
+>  
+                              SUR DE BOLÍVAR      35,464       0.53 
+>  
+                              SUR DE CÓRDOBA      60,035       0.89 
+>  
+                              SUR DEL TOLIMA      23,822       0.35 
+>  
+                            URABÁ ANTIOQUEÑO     107,575       1.59 
+>  
+
+.     
+.     * Guardar valores en escalares para reportar
+.     scalar matricula_pdet = total_matriculas[2] 
+
+.     scalar matricula_total_nacional = matricula_total[1]
+
+.     scalar prop_matricula_pdet = prop_matricula[2]
+
+.     
+.     di "MATRÍCULA TOTAL NACIONAL: " matricula_total_nacional
+MATRÍCULA TOTAL NACIONAL: 6751318
+
+.     di "Matrícula en municipios PDET: " matricula_pdet " (" prop_m
+> atricula_pdet "%)"
+Matrícula en municipios PDET: 119447 (1.7692398%)
+
+. restore
+
+. 
+. 
+. * ***************************************************************
+. * 1.7 Identifica las cinco (5) sedes con mayor matricula total (ta
+> nto urbanas como rurales) en los municipios PDET 
+. * ***************************************************************
+. 
+. * Filtrar solo municipios PDET (donde subregion_pdet no está vacío
+> )
+. keep if !missing(subregion_pdet)
+(32,496 observations deleted)
+
+. 
+. * Panel A: Sedes urbanas con mayor matrícula
+. *NOTA: Correr el bloque completo. De Preserve a Restore
+. preserve
+
+.     keep if ZONA == "URBANA"  // Ajustar según los valores exactos
+>  que muestra tab ZONA
+(10,046 observations deleted)
+
+.     
+.     * Ordenar por matrícula descendente y mantener top 5
+.     gsort -total_matricula
+
+.     keep in 1/5
+(1,286 observations deleted)
+
+.     
+.     * Mantener solo las variables necesarias para la tabla
+.     keep CODIGO_DANE_SEDE NOMBRE_SEDE MUNICIPIO SECRETARIA total_m
+> atricula
+
+.     
+.     * Mostrar resultados para Panel A
+.     di "PANEL A: SEDES URBANAS"
+PANEL A: SEDES URBANAS
+
+.     list CODIGO_DANE_SEDE NOMBRE_SEDE MUNICIPIO SECRETARIA total_m
+> atricula, clean noobs sep(0)
+
+    CODIGO_~E                              NOMBRE_SEDE      MUNICIPI
+> O     SECRETARIA   total_~s  
+    1.470e+11              SEDE 01 RODRIGO DE BASTIDAS    SANTA MART
+> A    SANTA MARTA       2818  
+    1.052e+11            LICEO CAUCASIA 1A. AGRUPACION       CAUCASI
+> A      ANTIOQUIA       2696  
+    2.235e+11                           INST EDU BELEN    MONTELIBAN
+> O        CORDOBA       2665  
+    3.050e+11   INSTITUCIÓN EDUCATIVA SAN PEDRO CLAVER       APARTAD
+> O       APARTADO       2662  
+    1.761e+11                  NORMAL JUAN LADRILLEROS   BUENAVENTUR
+> A   BUENAVENTURA       2653  
+
+.     
+. restore
+
+. 
+. * Panel B: Sedes rurales con mayor matrícula
+. *NOTA: Correr el bloque completo. De Preserve a Restore
+. preserve
+
+.     keep if ZONA == "RURAL"  // Ajustar según los valores exactos 
+> que muestra tab ZONA
+(1,305 observations deleted)
+
+.     
+.     * Ordenar por matrícula descendente y mantener top 5
+.     gsort -total_matricula
+
+.     keep in 1/5
+(10,027 observations deleted)
+
+.     
+.     * Mantener solo las variables necesarias para la tabla
+.     keep CODIGO_DANE_SEDE NOMBRE_SEDE MUNICIPIO SECRETARIA total_m
+> atricula
+
+.     
+.     * Mostrar resultados para Panel B
+.     di "PANEL B: SEDES RURALES"
+PANEL B: SEDES RURALES
+
+.     list CODIGO_DANE_SEDE NOMBRE_SEDE MUNICIPIO SECRETARIA total_m
+> atricula, clean noobs sep(0)
+
+    CODIGO_~E                                          NOMBRE_SEDE  
+>  MUNICI~O        SECRETARIA   total_~s  
+    2.058e+11                                             CURRULAO  
+>     TURBO             TURBO       1826  
+    2.050e+11                INSTITUCIÓN EDUCATIVA RURAL EL REPOSO  
+>  APARTADO          APARTADO       1673  
+    2.440e+11   INSTITUCIÀN EDUCATIVA RURALAGROPECUARIA DE MINGUEO  
+>   DIBULLA        LA GUAJIRA       1656  
+    2.548e+11                              COL INTEGRADO CAMPO DOS  
+>      TIBU   NORTE SANTANDER       1596  
+    2.548e+11                    CONC DE DESARROLLO RUR LA GABARRA  
+>      TIBU   NORTE SANTANDER       1475  
+
+. restore
+
+. 
+. * ***************************************************************
+. * 1.8 CONSERVAR VARIABLES SOLICITADAS Y GUARDAR BASE FINAL
+. * ***************************************************************
+. 
+. * Conservar solo las variables solicitadas
+. keep DEPARTAMENTO SECRETARIA COD_DANE_MUNICIPIO MUNICIPIO ///
+>      CODIGO_DANE NOMBRE_ESTABLECIMIENTO SECTOR_ATENCION ///
+>      CODIGO_DANE_SEDE NOMBRE_SEDE ZONA total_matricula subregion_p
+> det
+
+. 
+. * Renombrar total_matricula a TOTAL_MATRICULA para coincidir con l
+> o solicitado
+. rename total_matricula TOTAL_MATRICULA
+
+. 
+. * Guardar la base de datos resultante
+. save "SEDES_PDET_FINAL.dta", replace
+file SEDES_PDET_FINAL.dta saved
+
+. 
+. * ***************************************************************
+. * 1.9 Cruce con la base "CONECTIVIDAD_2022" 
+. * ***************************************************************
+. 
+. * Importar la base de conectividad
+. import excel using "https://github.com/9marlon9/Prueba-CNC/raw/mai
+> n/Conectividad_2022.xlsx", firstrow clear
+note:
+      https://github.com/9marlon9/Prueba-CNC/raw/main/Conectividad
+      > _2022.xlsx redirected to
+      https://raw.githubusercontent.com/9marlon9/Prueba-CNC/main/C
+      > onectividad_2022.xlsx
+(21 vars, 43,872 obs)
+
+. 
+. * Estandarizar el código DANE de la sede en ambas bases para asegu
+> rar match
+. rename CodigoDaneSede CODIGO_DANE_SEDE  
+
+. 
+. * Guardar base de conectividad temporalmente
+. save "CONECTIVIDAD_2022_estandarizada.dta", replace
+file CONECTIVIDAD_2022_estandarizada.dta saved
+
+. 
+. * Cargar nuestra base final
+. use "SEDES_PDET_FINAL.dta", clear
+
+. destring COD_DANE_MUNICIPIO, replace
+COD_DANE_MUNICIPIO: all characters numeric; replaced as long
+(14 missing values generated)
+
+. 
+. 
+. * Realizar el merge usando CODIGO_DANE_SEDE como llave
+. merge m:1 CODIGO_DANE_SEDE using "CONECTIVIDAD_2022_estandarizada.
+> dta", gen(merge_conectividad)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                        32,819
+        from master                       142  (merge_conectividad==
+> 1)
+        from using                     32,677  (merge_conectividad==
+> 2)
+
+    Matched                            11,195  (merge_conectividad==
+> 3)
+    -----------------------------------------
+
+. 
+. * Calcular porcentaje de cruce
+. tab merge_conectividad
+
+   Matching result from |
+                  merge |      Freq.     Percent        Cum.
+------------------------+-----------------------------------
+        Master only (1) |        142        0.32        0.32
+         Using only (2) |     32,677       74.24       74.56
+            Matched (3) |     11,195       25.44      100.00
+------------------------+-----------------------------------
+                  Total |     44,014      100.00
+
+. 
+. * ***************************************************************
+. *1.10) Sedes que cuentan con información de conectividad. 
+. * ***************************************************************
+. 
+. keep if merge_conectividad == 3 |  merge_conectividad == 2
+(142 observations deleted)
+
+. save "SEDES_PDET_CON_CONECTIVIDAD.dta", replace
+file SEDES_PDET_CON_CONECTIVIDAD.dta saved
+
+. 
+. * ***************************************************************
+. * 1.11) Estandarize la variable ANCHODEBANDACONSOLIDADOMbps
+. * ***************************************************************
+. 
+. * Extraer solo los valores numéricos y convertir a Mbps
+. * 1. Manejar valores especiales primero
+. replace ANCHODEBANDACONSOLIDADOMbps = "0" if ANCHODEBANDACONSOLIDA
+> DOMbps == "-" | ANCHODEBANDACONSOLIDADOMbps == "0"
+(7 real changes made)
+
+. replace ANCHODEBANDACONSOLIDADOMbps = "250 Mbps" if strpos(ANCHODE
+> BANDACONSOLIDADOMbps, "ILIMITADO") | strpos(ANCHODEBANDACONSOLIDAD
+> OMbps, "ILIMITADO")
+(10 real changes made)
+
+. 
+. * 2. Manejar rangos (tomar el valor mínimo)
+. gen temp_rango = ANCHODEBANDACONSOLIDADOMbps if strpos(ANCHODEBAND
+> ACONSOLIDADOMbps, "-")
+(43,867 missing values generated)
+
+. replace ANCHODEBANDACONSOLIDADOMbps = regexs(1) if regexm(ANCHODEB
+> ANDACONSOLIDADOMbps, "([0-9.]+)[[:space:]]*[–-]") & temp_rango != 
+> ""
+(0 real changes made)
+
+. 
+. * 3. Extraer el valor numérico
+. gen valor_numerico = real(regexs(1)) if regexm(ANCHODEBANDACONSOLI
+> DADOMbps, "([0-9.]+)")
+
+. 
+. * 4. Extraer la unidad
+. gen unidad = "Mbps" if strpos(ANCHODEBANDACONSOLIDADOMbps, "Mbps")
+>  | strpos(ANCHODEBANDACONSOLIDADOMbps, "MBPS")
+(20,622 missing values generated)
+
+. replace unidad = "Kbps" if strpos(ANCHODEBANDACONSOLIDADOMbps, "Kb
+> ps") | strpos(ANCHODEBANDACONSOLIDADOMbps, "KBPS")
+(2,506 real changes made)
+
+. replace unidad = "Gbps" if strpos(ANCHODEBANDACONSOLIDADOMbps, "Gb
+> ps") | strpos(ANCHODEBANDACONSOLIDADOMbps, "GBPS")
+(0 real changes made)
+
+. replace unidad = "GB" if strpos(ANCHODEBANDACONSOLIDADOMbps, "GB")
+(1,361 real changes made)
+
+. 
+. * 5. Convertir todo a Mbps
+. gen bandwidth_mbps = .
+(43,872 missing values generated)
+
+. replace bandwidth_mbps = 0 if ANCHODEBANDACONSOLIDADOMbps == "0"
+(16,705 real changes made)
+
+. replace bandwidth_mbps = 250 if strpos(ANCHODEBANDACONSOLIDADOMbps
+> , "Ilimitado") | strpos(ANCHODEBANDACONSOLIDADOMbps, "ilimitado")
+(0 real changes made)
+
+. replace bandwidth_mbps = valor_numerico if unidad == "Mbps"
+(23,242 real changes made)
+
+. replace bandwidth_mbps = valor_numerico / 1000 if unidad == "Kbps"
+(2,506 real changes made)
+
+. replace bandwidth_mbps = valor_numerico * 1024 if unidad == "GB"  
+> // 1 GB = 1024 Mbps
+(1,361 real changes made)
+
+. 
+. br ANCHODEBANDACONSOLIDADOMbps bandwidth_mbps
+
+. 
+. * 7. Limpiar variables temporales
+. drop temp_rango valor_numerico unidad
+
+. 
+. save "SEDES_PDET_CON_CONECTIVIDAD_MBPS.dta"
+file SEDES_PDET_CON_CONECTIVIDAD_MBPS.dta saved
+
+. 
+. 
+. * ----------------------------
+. *1.11.1) ¿Cuál es el promedio de velocidad de internet en las sede
+> s oficiales en Colombia? 
+. * ----------------------------
+. summarize bandwidth_mbps if bandwidth_mbps > 0
+
+    Variable |        Obs        Mean    Std. dev.       Min        
+> Max
+-------------+------------------------------------------------------
+> ---
+bandwidth_~s |     27,109    276.7581    1453.129       .512      40
+> 960
+
+. di "Promedio de velocidad: " r(mean) " Mbps"
+Promedio de velocidad: 276.75809 Mbps
+
+. summarize bandwidth_mbps if bandwidth_mbps > 0, detail
+
+                       bandwidth_mbps
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%         .512           .512
+ 5%         .512           .512
+10%            1           .512       Obs              27,109
+25%            2           .512       Sum of wgt.      27,109
+
+50%           10                      Mean           276.7581
+                        Largest       Std. dev.      1453.129
+75%           21          40960
+90%           80          40960       Variance        2111583
+95%         2048          40960       Skewness       12.82683
+99%         5120          40960       Kurtosis       284.5275
+
+. di "Mediana de velocidad: " r(p50) " Mbps"
+Mediana de velocidad: 10 Mbps
+
+. 
+. * ¿Cuál es la Secretaría de Educación con el promedio de velocidad
+>  más alto? ¿Y cuál tiene el promedio más bajo? ¿Cuál es la diferen
+> cia en el promedio de velocidad entre ambas secretarias?
+. 
+. * Calcular promedio de velocidad por Secretaría (solo valores > 0)
+. collapse (mean) velocidad_prom = bandwidth_mbps if bandwidth_mbps 
+> > 0, by(SECRETARIA)
+
+. 
+. * Ordenar de mayor a menor
+. gsort -velocidad_prom
+
+. 
+. * Identificar secretaría con mayor y menor promedio
+. local max_secretaria = SECRETARIA[1]
+
+. local max_prom = velocidad_prom[1]
+
+. local min_secretaria = SECRETARIA[_N]
+
+. local min_prom = velocidad_prom[_N]
+
+. local diferencia = `max_prom' - `min_prom'
+
+. 
+. di "Mayor promedio: `max_secretaria' (" `max_prom' " Mbps)"
+Mayor promedio: IPIALES (6586.9858 Mbps)
+
+. di "Menor promedio: `min_secretaria' (" `min_prom' " Mbps)"
+Menor promedio: GUAINÍA (2.5365853 Mbps)
+
+. di "Diferencia: " `diferencia' " Mbps"
+Diferencia: 6584.4493 Mbps
+
+. 
+. * ***************************************************************
+. * 1.12) Número de estudiantes promedio por Computador a nivel naci
+> onal
+. * ***************************************************************
+. 
+. use "SEDES_PDET_CON_CONECTIVIDAD_MBPS.dta", clear
+
+. 
+. * Calcular ratio estudiantes por computador
+. gen ratio_estudiantes_computador = TOTAL_MATRICULA / TotalComputad
+> oresPortatilF
+(33,823 missing values generated)
+
+. 
+. * Calcular promedio nacional (solo donde hay computadores)
+. sum ratio_estudiantes_computador if TotalComputadoresPortatilF > 0
+>  & !missing(TotalComputadoresPortatilF)
+
+    Variable |        Obs        Mean    Std. dev.       Min        
+> Max
+-------------+------------------------------------------------------
+> ---
+ratio_estu~r |     10,049    6.680595    30.49924          0       1
+> 540
+
+. di "Promedio nacional de estudiantes por computador: " r(mean)
+Promedio nacional de estudiantes por computador: 6.6805948
+
+. 
+. * ***************************************************************
+. * 1.13) calculo a nivel de Secretaría de Educación
+. * ***************************************************************
+. 
+. * Calcular benchmark nacional
+. sum ratio_estudiantes_computador if TotalComputadoresPortatilF > 0
+
+    Variable |        Obs        Mean    Std. dev.       Min        
+> Max
+-------------+------------------------------------------------------
+> ---
+ratio_estu~r |     10,049    6.680595    30.49924          0       1
+> 540
+
+. local benchmark = r(mean)
+
+. 
+. * Calcular promedio por Secretaría
+. preserve
+
+. collapse (mean) z_i = ratio_estudiantes_computador if TotalComputa
+> doresPortatilF > 0, by(SECRETARIA)
+
+. 
+. * Calcular brecha
+. gen brecha_equipos = `benchmark' - z_i
+(71 missing values generated)
+
+. 
+. * Ordenar por brecha
+. gsort -brecha_equipos
+
+. 
+. * Mostrar resultados
+. list SECRETARIA z_i brecha_equipos, clean noobs
+
+         SECRETARIA        z_i   brecha_~s  
+       CUNDINAMARCA   1.358323    5.322272  
+          RISARALDA   1.395327    5.285268  
+              HUILA   1.522043    5.158552  
+           GUAVIARE   2.190181    4.490414  
+              VALLE    2.33455    4.346045  
+            QUINDIO   2.334852    4.345743  
+          SANTANDER   2.423809    4.256786  
+             NARINO   2.907418    3.773177  
+             BOYACA   2.936872    3.743722  
+    NORTE SANTANDER    3.22466    3.455935  
+             TOLIMA   3.778886    2.901708  
+             ARAUCA   3.993209    2.687386  
+             CALDAS   3.994112    2.686483  
+           PUTUMAYO   4.100827    2.579768  
+               META   4.114041    2.566554  
+          FLORENCIA    4.70978    1.970815  
+              CAUCA   4.865781    1.814814  
+            CAQUETA   5.111899    1.568695  
+         LA GUAJIRA   5.568927    1.111668  
+           APARTADO   5.818602    .8619927  
+          ANTIOQUIA    6.19806    .4825352  
+              CHOCO   6.335207    .3453878  
+           MOSQUERA   7.511369   -.8307745  
+              TURBO   8.041919   -1.361324  
+         VALLEDUPAR   8.295759   -1.615164  
+            BOLIVAR   8.430954   -1.750359  
+              SUCRE   8.501323   -1.820728  
+            CIENAGA   11.16804   -4.487442  
+        SANTA MARTA   11.44498    -4.76439  
+             TUMACO   16.42717   -9.746572  
+       BUENAVENTURA   17.08859     -10.408  
+            CORDOBA   17.37999    -10.6994  
+              CESAR   22.97756   -16.29696  
+          MAGDALENA   24.87159   -18.19099  
+         FACATATIVÁ          .           .  
+           MAGANGUE          .           .  
+               BUGA          .           .  
+             QUIBDÓ          .           .  
+             URIBÍA          .           .  
+           AMAZONAS          .           .  
+             LORICA          .           .  
+          CARTAGENA          .           .  
+           RIOHACHA          .           .  
+            CÓRDOBA          .           .  
+              PASTO          .           .  
+             VAUPÉS          .           .  
+            POPAYÁN          .           .  
+           SABANETA          .           .  
+            PALMIRA          .           .  
+            VICHADA          .           .  
+              TULUA          .           .  
+          MANIZALES          .           .  
+             CÚCUTA          .           .  
+           APARTADÓ          .           .  
+            CIÉNAGA          .           .  
+               CALI          .           .  
+              NEIVA          .           .  
+              GIRÓN          .           .  
+              CHOCÓ          .           .  
+            GUAINÍA          .           .  
+            QUINDÍO          .           .  
+            SAHAGÚN          .           .  
+          ZIPAQUIRÁ          .           .  
+           MONTERÍA          .           .  
+             ITAGÜÍ          .           .  
+           MEDELLÍN          .           .  
+           GIRARDOT          .           .  
+             BOGOTÁ          .           .  
+          ATLÁNTICO          .           .  
+             MAICAO          .           .  
+            BOLÍVAR          .           .  
+      FLORIDABLANCA          .           .  
+        BUCARAMANGA          .           .  
+           CASANARE          .           .  
+            DUITAMA          .           .  
+       BARRANQUILLA          .           .  
+       DOSQUEBRADAS          .           .  
+            IPIALES          .           .  
+            JAMUNDÍ          .           .  
+            MALAMBO          .           .  
+              BELLO          .           .  
+      VILLAVICENCIO          .           .  
+               CHÍA          .           .  
+            CAQUETÁ          .           .  
+            CARTAGO          .           .  
+             IBAGUÉ          .           .  
+           ENVIGADO          .           .  
+           PITALITO          .           .  
+          SINCELEJO          .           .  
+        PIEDECUESTA          .           .  
+             NARIÑO          .           .  
+             SOACHA          .           .  
+         FUSAGASUGÁ          .           .  
+            PEREIRA          .           .  
+              YUMBO          .           .  
+              TUNJA          .           .  
+            ARMENIA          .           .  
+    BARRANCABERMEJA          .           .  
+             BOYACÁ          .           .  
+         SAN ANDRÉS          .           .  
+            SOLEDAD          .           .  
+           SOGAMOSO          .           .  
+              YOPAL          .           .  
+           RIONEGRO          .           .  
+              FUNZA          .           .  
+
+. 
+. * Guardar resultados
+. save "brecha_equipos_secretarias.dta", replace
+file brecha_equipos_secretarias.dta saved
+
+. restore
+
+. 
+. *¿Qué implica que una Secretaría de Educación tenga un valor negat
+> ivo en esta variable?
+. 
+. *¿Cuales son las cinco (5) secretarias con la brecha más alta? ¿Co
+> nsidera que comparten algún rasgo en común? (Si/No) ¿Por qué?
+. 
+. * Identificar las 5 secretarías con mayor brecha
+. use "brecha_equipos_secretarias.dta", clear
+
+. gsort -brecha_equipos
+
+. list SECRETARIA brecha_equipos in 1/5, clean noobs
+
+      SECRETARIA   brecha~s  
+    CUNDINAMARCA   5.322272  
+       RISARALDA   5.285268  
+           HUILA   5.158552  
+        GUAVIARE   4.490414  
+           VALLE   4.346045  
+
+. 
+. 
+. 
+end of do-file
+
+. log close
+      name:  <unnamed>
+       log:  C:\Users\Marlon Angulo\Desktop\CNC\Angulo_Marlon_Ejerci
+> cio_1.log
+  log type:  text
+ closed on:  19 Sep 2025, 20:46:26
+--------------------------------------------------------------------
